@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['src/main/python/main.py'],
-             pathex=['/home/alejandro/Documentos/Interfaz2.0/Software/Python/interfaz-link'],
+             pathex=['.'],
              binaries=[],
              datas=[('src/main/python/mainwindow.ui', '.')],
              hiddenimports=[],
@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True )
+          console=False )
