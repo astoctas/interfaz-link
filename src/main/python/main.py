@@ -1,11 +1,9 @@
-from PyQt5.QtWidgets import QMainWindow, QComboBox, QPushButton, QSystemTrayIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QPushButton, QSystemTrayIcon
 from PyQt5.QtGui import QIcon
-from PyQt5.Qt import QTimer
-from fbs_runtime.application_context.PyQt5 import ApplicationContext
-# noinspection PyPackageRequirements
 from serial.tools import list_ports
 from PyQt5 import uic
 import os
+import sys
 
 
 def list_serialports():
@@ -19,14 +17,22 @@ def list_serialports():
     return serial_ports
 
 
-import sys
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 class UI(QMainWindow):
     def __init__(self):
         super(UI, self).__init__()
         scriptDir = os.path.dirname(os.path.realpath(__file__))
-        uic.loadUi(os.path.join(scriptDir, "mainwindow.ui"), self)
+        uic.loadUi(resource_path("mainwindow.ui"), self)
         serial_ports = list_serialports()
         self.icon = QIcon(os.path.join(scriptDir,"..","icons","base","64.png"))
         self.setWindowIcon(self.icon)
@@ -50,7 +56,7 @@ class UI(QMainWindow):
 
 
 if __name__ == '__main__':
-    appctxt = ApplicationContext()       # 1. Instantiate ApplicationContext
+    app = QApplication([])
     window = UI()
-    exit_code = appctxt.app.exec_()      # 2. Invoke appctxt.app.exec_()
+    exit_code = app.exec_()      # 2. Invoke appctxt.app.exec_()
     sys.exit(exit_code)

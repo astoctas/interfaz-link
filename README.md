@@ -3,25 +3,25 @@ Interfaz Link Python app
 
 #DEV
 
-- Python 3.6
+- Python virtualenvironment
 
 
-    sudo add-apt-repository ppa:deadsnakes/ppa   
-    sudo apt-get update  
-    sudo apt install python3.6 python3.6-venv python-virtualenv
-    virtualenv --python=python3.6 venv
+    python3 -m venv venv
     source venv/bin/activate
     
-- PyQt5
+- PyQt5, PySerial
 
     
     pip install PyQt5
+    pip install PySerial    
+
     
-- fbs
+- pyinstaller
 
 
-    pip install fbs    
-    fbs run
+    pip install pyinstaller    
+    pyinstaller interfaz-link.spec
+    
     
    
    
