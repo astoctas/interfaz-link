@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QPushButton, QSystemTrayIcon
 from PyQt5.QtGui import QIcon
+import serial
 from serial.tools import list_ports
 from PyQt5 import uic
 import os
