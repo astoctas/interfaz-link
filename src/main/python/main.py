@@ -35,11 +35,11 @@ class UI(QMainWindow):
         scriptDir = os.path.dirname(os.path.realpath(__file__))
         uic.loadUi(resource_path("mainwindow.ui"), self)
         serial_ports = list_serialports()
-        self.icon = QIcon(os.path.join(scriptDir,"..","icons","base","64.png"))
+        self.icon = QIcon(resource_path(os.path.join("icons","base","64.png")))
         self.setWindowIcon(self.icon)
         self.tray = QSystemTrayIcon(self.icon)
         self.tray.show()
-        #self.tray.showMessage("title", "msg");
+        self.tray.showMessage("title", "msg");
         # GET COMPONENTS
         self.combo = self.findChild(QComboBox, "comboBox");
         self.combo.addItem('Automático', None)

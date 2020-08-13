@@ -6,7 +6,9 @@ block_cipher = None
 a = Analysis(['src/main/python/main.py'],
              pathex=['.'],
              binaries=[],
-             datas=[('src/main/python/mainwindow.ui', '.')],
+             datas=[
+                ('src/main/python/mainwindow.ui', '.')
+              ],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
