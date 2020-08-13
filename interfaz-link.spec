@@ -7,7 +7,7 @@ a = Analysis(['src/main/python/main.py'],
              pathex=['.'],
              binaries=[],
              datas=[
-                ('src/main/python/mainwindow.ui', '.')
+                ('src/main/python/mainwindow.ui', '.'),
                 ('src/main/python/icons/base/64.png', '.')
               ],
              hiddenimports=[],
