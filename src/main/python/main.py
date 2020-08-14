@@ -47,8 +47,10 @@ class UI(QMainWindow):
             self.combo.addItem(s.device + ' ' + s.description, s)
         self.conectarBtn = self.findChild(QPushButton, "conectarButton");
         self.conectarBtn.clicked.connect(self.clickedConectarBtn)
-        self.show()
-        #self.showMinimized()
+        self.showMinimized()
+        #self.show()
+        if sys.platform.startswith('win'):
+            self.hide()
         ### TODO: SYSTEM TRAY ###
 
 
