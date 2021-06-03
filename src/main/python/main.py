@@ -1,3 +1,5 @@
+##
+##
 from PyQt5.QtWidgets import QApplication, QMainWindow, QComboBox, QPushButton, QSystemTrayIcon, QPlainTextEdit, QLabel, QMenu, QAction
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import (QTimer, pyqtSignal)
@@ -6,20 +8,53 @@ from PyQt5 import uic
 import os
 import sys
 import threading
-from pyInterfaz.pyInterfaz import interfaz
 from socketmessages import SocketMessages
-from flask import Flask
+from flask import Flask, render_template
 from flask_socketio import SocketIO
+import sys
+import pip
+from subprocess import call
+import importlib
+
+def update_interfaz():
+    call(['pip', 'install', '--upgrade'] + ['pyinterfaz'])
+
+#importar pyInterfaz dinamicamente para updates
+pyInterfaz_spec = importlib.util.find_spec("pyInterfaz")
+if pyInterfaz_spec is None:
+    try:
+        update_interfaz()
+        pyInterfaz = importlib.import_module("pyInterfaz.pyInterfaz")
+    except:
+        print("Cargando modulo pyInterfaz local")
+        pyInterfaz = importlib.import_module("modules.pyInterfaz.pyInterfaz", package="pyInterfaz")
+else :
+    update_interfaz()
+    pyInterfaz = importlib.import_module("pyInterfaz.pyInterfaz")
+
+interfaz = pyInterfaz.interfaz
 
 # create a Socket.IO server
-sioapp = Flask(__name__)
-sioapp.config['SECRET_KEY'] = 'secret!'
+if getattr(sys, 'frozen', False):
+    template_folder = os.path.join(sys._MEIPASS, 'templates')
+    sioapp = Flask(__name__, template_folder=template_folder)
+else:
+    sioapp = Flask(__name__)
+
+sioapp.config['SECRET_KEY'] = 'robotica.ar'
 sio = SocketIO(sioapp, async_mode='threading', cors_allowed_origins='*')
 socket_port = 4268;
 
+@sioapp.route('/')
+def index():
+    return render_template('index.html')
+
+@sioapp.route('/socket.io.min.js')
+def socket_io():
+    return render_template('socket.io.min.js')
+
 def start_server():
     sio.run(sioapp, port=socket_port)
-
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -43,6 +78,12 @@ class UI(QMainWindow):
         uic.loadUi(resource_path("mainwindow.ui"), self)
         self.icon = QIcon(resource_path(os.path.join("icons","base","64.png")))
         self.setWindowIcon(self.icon)
+        # Menu
+        self.salir_menu = self.findChild(QAction, "actionSalir")
+        self.salir_menu.triggered.connect(app.quit)
+        self.crear_acceso_directo_menu = self.findChild(QAction, "actionCrear_acceso_directo")
+        self.crear_acceso_directo_menu.setVisible(sys.platform.startswith("win"))
+        # TrayICON
         self.tray = QSystemTrayIcon()
         self.tray.setIcon(self.icon)
         self.tray.show()
@@ -130,6 +171,8 @@ class UI(QMainWindow):
         serial_ports = self.list_serialports()
         if not (self.connected_port in serial_ports):
             # SE DESCONECTÓ
+            self.i.sp.close()
+            self.tray.showMessage("Interfaz robótica","Interfaz desconectada");
             self.connected_port = False;
             self.update_serial_ports()
             self.update_connect_label(0)
@@ -158,7 +201,11 @@ class UI(QMainWindow):
             print(inst)
         else:
             self.connected_port = port
-            self.log("Intefaz conectada en " + port.device)
+            str1 = "Intefaz conectada en " + port.device
+            self.tray.showMessage("Interfaz robótica", str1);
+            self.log(str1)
+            self.i.lcd().print(0, "Conectado en")
+            self.i.lcd().print(1, port.device)
             self.update_connect_label(1)
             return True
 
@@ -183,6 +230,7 @@ class UI(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication([])
+    app.setStyle('Fusion')
     window = UI()
     exit_code = app.exec_()      # 2. Invoke appctxt.app.exec_()
     sys.exit(exit_code)
