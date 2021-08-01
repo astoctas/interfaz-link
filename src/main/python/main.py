@@ -47,6 +47,7 @@ class UI(QMainWindow):
 
     def __init__(self):
         super(UI, self).__init__()
+        self.connect_status = 0;
         self.consoleTrigger.connect(self.log)
         scriptDir = os.path.dirname(os.path.realpath(__file__))
         uic.loadUi(resource_path("mainwindow.ui"), self)
@@ -134,6 +135,7 @@ class UI(QMainWindow):
             if len(_devices):
                 print("Reconectando...")
                 for s in serial_ports:
+                    self.update_connect_label(4)
                     try:
                         if self.conectar_interfaz(s):
                             break
@@ -159,7 +161,7 @@ class UI(QMainWindow):
         #print('Opening all potential serial ports...')
         the_ports_list = list_ports.comports()
         for port in the_ports_list:
-            if port.pid != None:
+            if port.device != None:
                 serial_ports.append(port)
         return serial_ports
 
@@ -196,9 +198,14 @@ class UI(QMainWindow):
         elif value == 3:
                 self.connected_label.setText("Conectando en "+port)
                 self.connected_label.setStyleSheet("color: orange")
+        elif value == 4:
+                self.connected_label.setText("Buscando...")
+                self.connected_label.setStyleSheet("color: orange")
         else:
-            self.connected_label.setText("Desconectado")
-            self.connected_label.setStyleSheet("color: red")
+            if self.connect_status != 4 :
+                self.connected_label.setText("Desconectado")
+                self.connected_label.setStyleSheet("color: red")
+        self.connect_status = value;
         app.processEvents()
 
     def log(self, msg):
