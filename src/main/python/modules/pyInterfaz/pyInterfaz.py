@@ -46,8 +46,15 @@ SHIFT_BACKWARD =    0x00
 
 class __pyInterfaz(Board):
 
-    def __init__(self, com_port, baudrate=57600, layout=None):
+    def __init__(self, com_port, baudrate=115200, layout=None):
         super().__init__(com_port,  baudrate=baudrate, layout=layout)
+        # IDENTIFICAMOS EL MODELO
+        self.add_cmd_handler(pyfirmata.REPORT_FIRMWARE, self._handle_report_firmware)
+        self.send_sysex(pyfirmata.QUERY_FIRMWARE, []);
+        self.pass_time(0.1)  # Serial SYNC
+        while self.bytes_available():
+            self.iterate();
+        self.load_board()
         # Necesitamos escribir directo sobre el puerto e indicamos conexión
         if self.led_builtin:
             self.sp.write([SET_DIGITAL_PIN,self.led_builtin,HIGH]);
@@ -58,6 +65,27 @@ class __pyInterfaz(Board):
         it.start()
         self.add_cmd_handler(I2C_REPLY, self._handle_i2c_message)
         self.send_sysex(I2C_CONFIG, []);  # I2C_CONFIG
+
+    def load_board(self):
+        if self.firmware is not None:
+            if hasattr(self, self.firmware):
+                b = getattr(self, self.firmware)
+                b()
+                return
+        # Si no podemos identificar por firmware lo hacemos por hardware
+        m = None
+        if len(self._layout['digital']) == 18 and len(self._layout['analog']) == 6: # Arduino UNO
+            m = 'uno'
+        elif len(self._layout['digital']) == 18 and len(self._layout['analog']) == 8: # Arduino Nano
+            m = 'rasti'
+        if m is not None and hasattr(self, m):
+            b = getattr(self, m)
+            b()
+        else:
+            raise ValueError("No se pudo identificar el modelo")
+
+
+
 
     def _handle_i2c_message(self, *args, **kwargs):
         address = util.from_two_bytes([args[0], args[1]])
@@ -84,6 +112,85 @@ class __pyInterfaz(Board):
                 self.analog[pin_nr].value = value
         except IndexError:
             raise ValueError
+
+    def _handle_report_capability_response(self, *data):
+        charbuffer = []
+        pin_spec_list = []
+
+        for c in data:
+            if c == pyfirmata.CAPABILITY_RESPONSE:
+                continue
+
+            charbuffer.append(c)
+            if c == 0x7F:
+                # A copy of charbuffer
+                pin_spec_list.append(charbuffer[:])
+                charbuffer = []
+
+        self._layout = self.pin_list_to_board_dict(pin_spec_list)
+
+    def pin_list_to_board_dict(self, pinlist):
+        """
+        Capability Response codes:
+            INPUT:  0, 1
+            OUTPUT: 1, 1
+            ANALOG: 2, 10
+            PWM:    3, 8
+            SERV0:  4, 14
+            I2C:    6, 1
+            PULLUP: 11, 1
+        """
+
+        board_dict = {
+            "digital": [],
+            "analog": [],
+            "pwm": [],
+            "servo": [],  # 2.2 specs
+            # 'i2c': [],  # 2.3 specs
+            "disabled": [],
+        }
+
+        for i, pin in enumerate(pinlist):
+            pin.pop()  # removes the 0x79 on end
+            if not pin:
+                board_dict["disabled"] += [i]
+                #board_dict["digital"] += [i]
+                continue
+
+            capabilities = pin[::2]
+            # Iterate over evens
+            if 0 in capabilities and 1 in capabilities:
+                board_dict["digital"] += [i]
+            if 2 in capabilities:
+                board_dict["analog"] += [i]
+            if 3 in capabilities:
+                board_dict["pwm"] += [i]
+            if 4 in capabilities:
+                board_dict["servo"] += [i]
+            # Desable I2C
+            if 6 in capabilities:
+                pass
+
+        # We have to deal with analog pins:
+        # - (14, 15, 16, 17, 18, 19)
+        # + (0, 1, 2, 3, 4, 5)
+        diff = set(board_dict["digital"]) - set(board_dict["analog"])
+        board_dict["analog"] = [n for n, _ in enumerate(board_dict["analog"])]
+
+        # Digital pin problems:
+        # - (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+        # + (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+        #board_dict["digital"] = [n for n, _ in enumerate(diff)]
+        # Based on lib Arduino 0017
+        #board_dict["servo"] = board_dict["digital"]
+        board_dict["servo"] = [n for n, _ in enumerate(diff)]
+
+        # Turn lists into tuples
+        # Using dict for Python 2.6 compatibility
+        board_dict = dict([(key, tuple(value)) for key, value in board_dict.items()])
+
+        print(board_dict)
+        return board_dict
 
     def output(self, index):
         if index < 1: index = 1
@@ -464,39 +571,13 @@ class __pyInterfaz(Board):
                 self.strip_color(color)
             self._interfaz.print("pixel " + str(self.index), "apagado")
 
-
-class i32(__pyInterfaz):
-    def __init__(self, com_port, baudrate=115200):
-        self.boardlayout = {
-            'digital' : tuple(x for x in range(40)),
-            'analog' : tuple(x for x in range(20)),
-            'pwm' : tuple(x for x in range(40)),
-            'use_ports' : True,
-            'disabled' : (0, 1) # Rx, Tx
-        }    
-        self.led_builtin = 2;
-        super().__init__(com_port, baudrate=baudrate, layout=self.boardlayout)
-        self._lcd = self._LCD(self)
-        self._outputs = [self._Output(self, 0), self._Output(self, 1), self._Output(self, 2), self._Output(self, 3)]
-        self._servos = [self._Servo(self, 1), self._Servo(self, 2)]
-        self._analogs = [self._Analog(self, 0), self._Analog(self, 3), self._Analog(self, 6), self._Analog(self,7)]
-        self._i2c = dict()
-        self._joystick = self._Joystick(self)
-        self._pins = [self._Pin(self, 1), self._Pin(self, 2)]
-        self._pixels = [self._Pixel(self, 1), self._Pixel(self, 2)]
-
-
 class interfaz(__pyInterfaz):
     def __init__(self, com_port):
-        self.boardlayout = {
-            'digital': tuple(x for x in range(17)),
-            'analog': tuple(x for x in range(6)),
-            'pwm': (3, 5, 6, 9, 10, 11),
-            'use_ports' : True,
-            'disabled' : (0, 1) # Rx, Tx
-        }
+        super().__init__(com_port, baudrate=115200, layout=None)
+
+    def uno(self):
+        self.modelo = "Uno";
         self.led_builtin = 13;
-        super().__init__(com_port, baudrate=57600, layout=self.boardlayout)
         self._lcd = self._LCD(self)
         self._outputs = [self._Output(self, 0), self._Output(self, 1), self._Output(self, 2), self._Output(self, 3)]
         self._servos = [self._Servo(self, 1), self._Servo(self, 2)]
@@ -507,10 +588,9 @@ class interfaz(__pyInterfaz):
         self._i2c = dict()
         self._joystick = self._Joystick(self)
 
-class rasti(__pyInterfaz):
-    def __init__(self, com_port):
+    def rasti(self):
         self.led_builtin = 13;
-        super().__init__(com_port)
+        self.modelo = "Rasti";
         self._lcd = None
         self._outputs = [self._Output(self, 0), self._Output(self, 1)]
         self._servos = [self._Servo(self, 1), self._Servo(self, 2)]
@@ -519,3 +599,30 @@ class rasti(__pyInterfaz):
         self._joystick = self._Joystick(self)
         self._pins = [self._Pin(self, 1), self._Pin(self, 2)]
         self._pixels = [self._Pixel(self, 1), self._Pixel(self, 2)]
+
+    def i32(self):
+        self.led_builtin = 2;
+        self._lcd = self._LCD(self)
+        self._outputs = [self._Output(self, 0), self._Output(self, 1), self._Output(self, 2), self._Output(self, 3)]
+        self._servos = [self._Servo(self, 1), self._Servo(self, 2)]
+        self._analogs = [self._Analog(self, 0), self._Analog(self, 3), self._Analog(self, 6), self._Analog(self,7)]
+        self._i2c = dict()
+        self._joystick = self._Joystick(self)
+        self._pins = [self._Pin(self, 1), self._Pin(self, 2)]
+        self._pixels = [self._Pixel(self, 1), self._Pixel(self, 2)]
+
+
+"""
+def interfaz(com_port):
+    boardlayout = {'digital': (),'analog': (),'pwm': (),'use_ports': False,'disabled': ()}
+    b = Board(com_port, baudrate=115200, layout=None, timeout=2)
+    modelo = b.firmware
+    b.exit();
+    # DEVOLVER LA INSTANCIA CORRESPONDIENTE AL FIRMWARE
+    print(modelo)
+    if modelo == "uno":
+        return uno(com_port)
+    elif modelo == "rasti":
+        return rasti(com_port)
+    raise Exception("Error en modelo de interfaz")
+"""

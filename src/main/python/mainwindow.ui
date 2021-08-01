@@ -45,7 +45,7 @@
           <widget class="QLabel" name="connected_label">
            <property name="font">
             <font>
-             <pointsize>30</pointsize>
+             <pointsize>20</pointsize>
              <weight>75</weight>
              <bold>true</bold>
             </font>
@@ -168,11 +168,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionCrear_acceso_directo">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
    <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Crear acceso directo</string>
+    <string>Abrir al inicio</string>
    </property>
    <property name="visible">
     <bool>true</bool>
@@ -183,7 +186,8 @@
   </action>
   <action name="actionSalir">
    <property name="icon">
-    <iconset theme="exit"/>
+    <iconset theme="exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Salir</string>

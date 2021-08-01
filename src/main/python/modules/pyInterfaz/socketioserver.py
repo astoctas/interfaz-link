@@ -1,9 +1,36 @@
 from inspect import signature
+from flask import Flask, render_template
+from flask_socketio import SocketIO
+import sys
+import threading
+import os
 
-class SocketMessages():
-    def __init__(self, sio, window):
+socket_port = 4268;
+
+class SocketIOServer():
+    def __init__(self, window):
         self.window = window
+        # create a Socket.IO server
+        if getattr(sys, 'frozen', False):
+            template_folder = os.path.join(sys._MEIPASS, 'templates')
+        else:
+            template_folder = os.path.join(os.getcwd(), "templates")
+        sioapp = Flask(__name__, template_folder=template_folder)
+        sioapp.config['SECRET_KEY'] = 'robotica.ar'
+        sio = SocketIO(sioapp, async_mode='threading', cors_allowed_origins='*')
         self.sio = sio
+        self.sioapp = sioapp
+        x = threading.Thread(target=self.start_server, args=(), daemon=True)
+        x.start()
+        self.log("Servidor socket corriendo en: http://127.0.0.1:"+str(socket_port))
+
+        @sioapp.route('/')
+        def index():
+            return render_template('index.html')
+
+        @sioapp.route('/socket.io.min.js')
+        def socket_io():
+            return render_template('socket.io.min.js')
 
         @sio.on('OUTPUT')
         def output_message(b):
@@ -45,6 +72,9 @@ class SocketMessages():
                 self.exec("i2c", b, lambda d: self.emit_report("I2C_MESSAGE", b['address'], d))
             else:
                 self.exec("i2c", b)
+
+    def start_server(self):
+        self.sio.run(self.sioapp, port=socket_port)
 
     def emit_report(self, key, index, data):
         self.sio.start_background_task(target=self.emit(key, {'index': index, 'value': data}))

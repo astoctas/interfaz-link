@@ -1,0 +1,33 @@
+Metadata-Version: 2.1
+Name: pyInterfaz
+Version: 0.3.2
+Summary: Clases para controlar la interfaz robótica
+Home-page: https://github.com/astoctas/pyInterfaz
+Author: Robotica.ar
+Author-email: alejandro.lavagnino@gmail.com
+License: UNKNOWN
+Description: # pyInterfaz
+        Interfaz Python class
+        
+        #DEV
+        
+        - Python 3.6
+        
+        
+            sudo add-apt-repository ppa:deadsnakes/ppa   
+            sudo apt-get update  
+            sudo apt install python3.6 python3.6-venv python-virtualenv  
+            virtualenv --python=python3.6 venv  
+            source venv/bin/activate
+            
+        
+            
+           
+           
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3.8
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown

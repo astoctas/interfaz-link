@@ -9,6 +9,7 @@ a = Analysis(['src/main/python/main.py'],
              datas=[
                 ('src/main/python/mainwindow.ui', '.'),
                 ('src/main/python/icons/base/64.png', './icons/base/'),
+                ('src/main/python/modules', 'modules'),
                 ('src/main/python/templates/index.html', 'templates'),
                 ('src/main/python/templates/socket.io.min.js', 'templates')
               ],
@@ -31,6 +32,7 @@ exe = EXE(
     name='interfaz-link',
     debug=False,
     strip=False,
-    upx=True,
-    console=False
+    upx=False,
+    console=False,
+    runtime_tmpdir="."
 )

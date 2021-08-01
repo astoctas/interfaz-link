@@ -1,0 +1,11 @@
+README.md
+setup.cfg
+setup.py
+pyInterfaz/__init__.py
+pyInterfaz/pyInterfaz.py
+pyInterfaz/socketioserver.py
+pyInterfaz.egg-info/PKG-INFO
+pyInterfaz.egg-info/SOURCES.txt
+pyInterfaz.egg-info/dependency_links.txt
+pyInterfaz.egg-info/requires.txt
+pyInterfaz.egg-info/top_level.txt
