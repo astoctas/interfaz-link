@@ -23,7 +23,7 @@ def resource_path(relative_path):
 
 def update_interfaz():
     try:
-        res = run(['pip', 'install', '--upgrade', '--no-deps', '--target='+resource_path('modules'), '--ignore-installed', 'pyinterfaz'])
+        res = run(['pip', 'install', '--upgrade', '--no-deps', '--target='+resource_path(os.path.join('modules','pyInterfaz')), '--ignore-installed', 'pyinterfaz'])
         print(res)
     except:
         print("Falló actualización de librería o Pip no instalado")
@@ -35,8 +35,8 @@ try:
 except:
     print("Desarrollo - No se actualiza pyInterfaz")
 
-pyInterfaz = importlib.import_module("modules.pyInterfaz.pyInterfaz", package="pyInterfaz")
-sioserver = importlib.import_module("modules.pyInterfaz.socketioserver", package="socketioserver")
+pyInterfaz = importlib.import_module("modules.pyInterfaz.pyInterfaz.pyInterfaz", package="pyInterfaz")
+sioserver = importlib.import_module("modules.pyInterfaz.pyInterfaz.socketioserver", package="socketioserver")
 
 interfaz = pyInterfaz.interfaz
 SocketIOServer = sioserver.SocketIOServer
