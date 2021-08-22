@@ -40,10 +40,5 @@ exe = EXE(
 app = BUNDLE(exe,
          name='interfaz-link.app',
          icon='src/main/python/icons/base/64.png',
-         bundle_identifier=None,
-         version='0.0.1',
-         info_plist={
-            'NSPrincipalClass': 'NSApplication',
-            'NSAppleScriptEnabled': False
-            },
+         bundle_identifier=None
          )

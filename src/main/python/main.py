@@ -87,7 +87,7 @@ class UI(QMainWindow):
         self.conectar_button.clicked.connect(self.conectar_button_click)
         self.connected_label = self.findChild(QLabel, "connected_label")
         # Start socket server
-        ss = SocketIOServer(self)
+        self.ss = SocketIOServer(self)
 
         #start serial timer
         self.devices = []
@@ -149,6 +149,7 @@ class UI(QMainWindow):
         if not (self.connected_port in serial_ports):
             # SE DESCONECTÓ
             self.i.sp.close()
+            self.ss.emit_report("DISCONNECTED_MESSAGE",0,[]);
             self.tray.showMessage("Interfaz robótica","Interfaz desconectada");
             self.connected_port = False;
             self.update_serial_ports()
@@ -180,6 +181,7 @@ class UI(QMainWindow):
         else:
             self.connected_port = port
             str1 = "Intefaz "+self.i.modelo+ " conectada en " + port.device
+            self.ss.emit_report("CONNECTED_MESSAGE",0,[]);
             self.tray.showMessage("Interfaz robótica", str1);
             self.log(str1)
             self.i.lcd().print(0, "Conectado en")
