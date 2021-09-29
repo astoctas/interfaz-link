@@ -184,8 +184,9 @@ class UI(QMainWindow):
             self.ss.emit_report("CONNECTED_MESSAGE",0,[]);
             self.tray.showMessage("Interfaz robótica", str1);
             self.log(str1)
-            self.i.lcd().print(0, "Conectado en")
-            self.i.lcd().print(1, port.device)
+            if self.i.lcd() is not None:
+                self.i.lcd().print(0, "Conectado en")
+                self.i.lcd().print(1, port.device)
             self.update_connect_label(1, port.device)
             return True
 
